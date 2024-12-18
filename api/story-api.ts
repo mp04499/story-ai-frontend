@@ -1,42 +1,45 @@
-"use server";
-
 import { StoryRequest, StoryResponse } from "@/types/story";
 import { SYSTEM_MESSAGE } from "@/constants";
 
 const baseUrl = process.env.STORY_LLM_INFERENCE_URL;
 
-export type StreamResponseChunk<T> = {
-  iteratorResult: IteratorResult<T>;
-  next?: Promise<StreamResponseChunk<T>>;
-};
+// export type StreamResponseChunk<T> = {
+//   iteratorResult: IteratorResult<T>;
+//   next?: Promise<StreamResponseChunk<T>>;
+// };
+//
+// async function streamChunk<T>(generator: AsyncGenerator<T>) {
+//   const next = generator.next();
+//   return new Promise<StreamResponseChunk<T>>((resolve, reject) => {
+//     next.then((res) => {
+//       if (res.done) resolve({ iteratorResult: res });
+//       else resolve({ iteratorResult: res, next: streamChunk(generator) });
+//     });
+//     next.catch((error) => reject(error));
+//   });
+// }
+//
+// function streamResponse<T, P extends string[]>(
+//   createGenerator: (...args: P) => AsyncGenerator<T>,
+// ) {
+//   return (...args: Parameters<typeof createGenerator>) => {
+//     const generator = createGenerator(...args);
+//     return streamChunk<T>(generator);
+//   };
+// }
+//
 
-async function streamChunk<T>(generator: AsyncGenerator<T>) {
-  const next = generator.next();
-  return new Promise<StreamResponseChunk<T>>((resolve, reject) => {
-    next.then((res) => {
-      if (res.done) resolve({ iteratorResult: res });
-      else resolve({ iteratorResult: res, next: streamChunk(generator) });
-    });
-    next.catch((error) => reject(error));
-  });
+export async function* generateStream(text: string) {
+  yield* getStory(text);
 }
 
-function streamResponse<T, P extends string[]>(
-  createGenerator: (...args: P) => AsyncGenerator<T>,
-) {
-  return (...args: Parameters<typeof createGenerator>) => {
-    const generator = createGenerator(...args);
-    return streamChunk<T>(generator);
-  };
-}
-
-export const getStory = streamResponse(async function* (text: string) {
+export async function* getStory(text: string) {
   const url = `${baseUrl}/v1/chat/completions`;
 
   const request = {
     model: "GawdSB/story_model",
     messages: [SYSTEM_MESSAGE, { role: "user", content: text }],
-    max_new_token: 2000,
+    max_new_tokens: 2000,
     top_k: 50,
     top_p: 0.95,
     num_return_sequences: 1,
@@ -48,22 +51,7 @@ export const getStory = streamResponse(async function* (text: string) {
 
   const response = await fetch(url, {
     method: "POST",
-    body: JSON.stringify({
-      model: "GawdSB/story_model",
-      messages: [
-        {
-          role: "system",
-          content: "You are a imaginative story telling chat bot",
-        },
-        { role: "user", content: "make me a horror story" },
-      ],
-      max_new_tokens: 2000,
-      top_k: 50,
-      top_p: 0.95,
-      num_return_sequences: 1,
-      do_sample: true,
-      stream: true,
-    }),
+    body: JSON.stringify(request),
     headers: {
       "Content-Type": "application/json",
       Connection: "keep-alive",
@@ -99,7 +87,6 @@ export const getStory = streamResponse(async function* (text: string) {
         const data = line.substring(5).trim();
         try {
           const json = JSON.parse(data) as StoryResponse; // If the data is JSON
-          console.log("Received JSON event:", json);
           const content = json.choices[0].delta.content;
           yield content;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -109,4 +96,5 @@ export const getStory = streamResponse(async function* (text: string) {
       }
     }
   }
-});
+  reader.releaseLock();
+}

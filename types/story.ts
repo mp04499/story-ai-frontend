@@ -29,9 +29,10 @@ export interface Message {
 export interface StoryRequest {
   model: "GawdSB/story_model";
   messages: Message[];
-  max_new_token: number;
+  max_new_tokens: number;
   top_k: number;
   top_p: number;
+  num_return_sequences: number;
   do_sample: boolean;
   stream: boolean;
 }
