@@ -49,7 +49,7 @@ export default function Home() {
     <div className="flex flex-col w-full min-h-screen place-items-center justify-center gap-4">
       {story.length ? (
         <div className="flex justify-center">
-          <ScrollArea className="w-2/4 h-60">{story}</ScrollArea>
+          <ScrollArea className="w-2/4 min-h-20 max-h-96">{story}</ScrollArea>
         </div>
       ) : null}
       <div className="w-2/4 flex flex-row gap-2">
