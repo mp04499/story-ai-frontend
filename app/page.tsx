@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkle, Loader2 } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { getStory, StreamResponseChunk } from "@/api/story-api";
 
 function iterateStreamResponse<T>(
@@ -28,15 +28,16 @@ function iterateStreamResponse<T>(
 }
 
 export default function Home() {
-  const story = useRef("");
+  const [story, setStory] = useState("");
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
 
   const createStory = useCallback(async () => {
     setLoading(true);
+    setStory("");
     try {
       for await (const value of iterateStreamResponse(getStory(text))) {
-        story.current = story.current += value;
+        setStory((prev) => prev + value)
       }
     } catch (error) {
       console.error(error);
@@ -46,9 +47,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-full min-h-screen place-items-center justify-center gap-4">
-      {story.current.length ? (
+      {story.length ? (
         <div className="flex justify-center">
-          <ScrollArea className="w-2/4 h-40">{story.current}</ScrollArea>
+          <ScrollArea className="w-2/4 h-60">{story}</ScrollArea>
         </div>
       ) : null}
       <div className="w-2/4 flex flex-row gap-2">

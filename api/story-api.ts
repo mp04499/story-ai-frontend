@@ -48,22 +48,7 @@ export const getStory = streamResponse(async function* (text: string) {
 
   const response = await fetch(url, {
     method: "POST",
-    body: JSON.stringify({
-      model: "GawdSB/story_model",
-      messages: [
-        {
-          role: "system",
-          content: "You are a imaginative story telling chat bot",
-        },
-        { role: "user", content: "make me a horror story" },
-      ],
-      max_new_tokens: 2000,
-      top_k: 50,
-      top_p: 0.95,
-      num_return_sequences: 1,
-      do_sample: true,
-      stream: true,
-    }),
+    body: JSON.stringify(request),
     headers: {
       "Content-Type": "application/json",
       Connection: "keep-alive",
@@ -109,4 +94,5 @@ export const getStory = streamResponse(async function* (text: string) {
       }
     }
   }
+  reader.releaseLock();
 });
